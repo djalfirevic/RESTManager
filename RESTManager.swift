@@ -32,60 +32,51 @@ class RESTManager {
     static let shared = RESTManager()
     private init() {}
     
-    // MARK: - Public API
-    func hasInternetConnection() -> Bool {
-        let reachability = Reachability()
-        
-        return reachability!.isReachable
-    }
-    
     func loadData(from urlString: String, method: HttpMethod, parameters: JSON?, completion: @escaping (_ status: Status, _ data: Any?) -> ()) {
-        if hasInternetConnection() {
-            if let url = URL(string: urlString) {
-                let session = URLSession(configuration: URLSessionConfiguration.ephemeral)
-                let request = configureRequestFor(url, method: method, parameters: parameters)
-                
-                let task = session.dataTask(with: request) { (data, response, error) in
-                    var status = Status.success
-                    if let httpResponse = response as? HTTPURLResponse {
-                        status = Status.init(rawValue: httpResponse.statusCode)!
-                    }
-                    
-                    if let error = error {
-                        DispatchQueue.main.async(execute: {
-                            completion(status, nil)
-                            print("Error = \(String(describing: error))")
-                        })
-                    }
-                    
-                    // Data acquired
-                    do {
-                        if let data = data {
-                            let json = try JSONSerialization.jsonObject(with: data, options: JSONSerialization.ReadingOptions.mutableContainers)
-                            
-                            DispatchQueue.main.async(execute: {
-                                completion(status, json)
-                            })
-                        } else {
-                            DispatchQueue.main.async(execute: {
-                                completion(status, nil)
-                            })
-                        }
-                    } catch let error as NSError {
-                        DispatchQueue.main.async(execute: {
-                            completion(status, nil)
-                        })
-                        
-                        print("JSON error: \(error.localizedDescription)")
-                    }
+        if let url = URL(string: urlString) {
+            let session = URLSession(configuration: URLSessionConfiguration.ephemeral)
+            let request = configureRequestFor(url, method: method, parameters: parameters)
+
+            let task = session.dataTask(with: request) { (data, response, error) in
+                var status = Status.success
+                if let httpResponse = response as? HTTPURLResponse {
+                    status = Status.init(rawValue: httpResponse.statusCode)!
                 }
-                
-                task.resume()
-            } else {
-                DispatchQueue.main.async(execute: {
-                    completion(Status.error, nil)
-                })
+
+                if let error = error {
+                    DispatchQueue.main.async(execute: {
+                        completion(status, nil)
+                        print("Error = \(String(describing: error))")
+                    })
+                }
+
+                // Data acquired
+                do {
+                    if let data = data {
+                        let json = try JSONSerialization.jsonObject(with: data, options: JSONSerialization.ReadingOptions.mutableContainers)
+
+                        DispatchQueue.main.async(execute: {
+                            completion(status, json)
+                        })
+                    } else {
+                        DispatchQueue.main.async(execute: {
+                            completion(status, nil)
+                        })
+                    }
+                } catch let error as NSError {
+                    DispatchQueue.main.async(execute: {
+                        completion(status, nil)
+                    })
+
+                    print("JSON error: \(error.localizedDescription)")
+                }
             }
+
+            task.resume()
+        } else {
+            DispatchQueue.main.async(execute: {
+                completion(Status.error, nil)
+            })
         }
     }
     
