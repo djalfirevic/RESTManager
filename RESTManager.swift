@@ -32,7 +32,8 @@ class RESTManager {
     static let shared = RESTManager()
     private init() {}
     
-    func loadData(from urlString: String, method: HttpMethod, parameters: JSON?, completion: @escaping (_ status: Status, _ data: Any?) -> ()) {
+    // MARK: - Public API
+    public func loadData(from urlString: String, method: HttpMethod, parameters: JSON?, completion: @escaping (_ status: Status, _ data: Any?) -> ()) {
         if let url = URL(string: urlString) {
             let session = URLSession(configuration: URLSessionConfiguration.ephemeral)
             let request = configureRequestFor(url, method: method, parameters: parameters)
